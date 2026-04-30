@@ -458,7 +458,7 @@ async function submitForm(){
   data.append('message', message);
 
   try {
-    const res = await fetch('https://lbdev.tech/contact.php', { method: 'POST', body: data });
+    const res = await fetch('https://api-email-home.lbdev.tech/contact.php', { method: 'POST', body: data });
     const json = await res.json();
     if(json.success){
       msg.className='form-msg success';
