@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LB Development</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#080d14;--bg2:#0d1520;--bg3:#111c2a;
+  --blue:#2a7fd4;--green:#00ff88;--green-dim:rgba(0,255,136,0.12);
+  --text:#c8d8e8;--muted:#4a6a8a;--border:rgba(42,127,212,0.2);
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(8,13,20,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);}
+.nav-left{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;}
+.nav-prompt{color:var(--green);}
+.nav-name{color:#fff;font-weight:700;}
+.nav-cursor{display:inline-block;width:8px;height:14px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.nav-links{display:flex;gap:4px;}
+.nav-link{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:12px;padding:6px 14px;cursor:pointer;border-radius:4px;transition:all 0.15s;}
+.nav-link:hover,.nav-link.active{color:var(--green);background:var(--green-dim);}
+.nav-link.active::before{content:'> ';}
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--muted);border-radius:2px;transition:all 0.2s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mobile-nav{display:none;position:fixed;top:56px;left:0;right:0;background:rgba(8,13,20,0.99);border-bottom:1px solid var(--border);z-index:199;flex-direction:column;padding:12px 16px;}
+.mobile-nav.open{display:flex;}
+.mobile-nav-link{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:14px;padding:14px 12px;cursor:pointer;text-align:left;border-bottom:1px solid var(--border);transition:color 0.15s;}
+.mobile-nav-link:last-child{border-bottom:none;}
+.mobile-nav-link:hover,.mobile-nav-link.active{color:var(--green);}
+
+/* PAGES */
+.page{display:none;padding-top:56px;min-height:calc(100vh - 56px);}
+.page.active{display:block;}
+
+/* HERO */
+.hero{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 56px);align-items:center;padding:0 48px;gap:48px;position:relative;overflow:hidden;}
+.hero-bg-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:0.25;pointer-events:none;}
+.hero-left{position:relative;z-index:1;}
+.hero-eyebrow{font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:2px;margin-bottom:24px;}
+.hero-eyebrow span{color:var(--muted);}
+.hero h1{font-family:var(--mono);font-size:clamp(32px,4.5vw,62px);font-weight:700;color:#fff;line-height:1.08;margin-bottom:20px;letter-spacing:-1px;}
+.hero h1 em{color:var(--blue);font-style:normal;}
+.hero-desc{font-size:17px;color:var(--muted);line-height:1.8;margin-bottom:40px;font-weight:300;}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:48px;}
+.btn-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,255,136,0.3);padding:11px 26px;border-radius:6px;font-family:var(--mono);font-size:13px;cursor:pointer;transition:all 0.15s;}
+.btn-green:hover{background:rgba(0,255,136,0.2);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);padding:11px 26px;border-radius:6px;font-family:var(--mono);font-size:13px;cursor:pointer;transition:all 0.15s;}
+.btn-ghost:hover{color:var(--text);border-color:rgba(42,127,212,0.5);}
+.hero-stats{display:flex;gap:36px;}
+.hero-stat-num{font-family:var(--mono);font-size:28px;font-weight:700;color:#fff;}
+.hero-stat-num span{color:var(--green);}
+.hero-stat-label{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* HERO RIGHT */
+.hero-right{position:relative;z-index:1;}
+.terminal{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.terminal-bar{background:var(--bg3);padding:10px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+.dot{width:12px;height:12px;border-radius:50%;}
+.dot.r{background:#ff5f57;}.dot.y{background:#febc2e;}.dot.g{background:#28c840;}
+.terminal-title{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:8px;}
+.terminal-body{padding:24px;font-family:var(--mono);font-size:13px;line-height:2.1;}
+.t-comment{color:var(--muted);}
+.t-key{color:#7dd3fc;}
+.t-val{color:var(--green);}
+.t-str{color:#f9a8d4;}
+.t-num{color:#fb923c;}
+.typing-line{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+.typing-prompt{color:var(--green);font-family:var(--mono);font-size:13px;}
+#typingText{color:#fff;font-family:var(--mono);font-size:13px;}
+.typing-caret{display:inline-block;width:8px;height:14px;background:var(--green);vertical-align:middle;animation:blink 0.8s step-end infinite;}
+
+/* SECTIONS */
+.section{padding:80px 48px;max-width:100%;}
+.section-header{display:flex;align-items:baseline;gap:16px;margin-bottom:48px;border-bottom:1px solid var(--border);padding-bottom:20px;flex-wrap:wrap;}
+.section-num{font-family:var(--mono);font-size:12px;color:var(--green);}
+.section-title{font-family:var(--mono);font-size:22px;font-weight:700;color:#fff;}
+.section-count{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:auto;}
+
+/* PROJECTS */
+.filter-tabs{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;}
+.filter-tab{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:12px;padding:6px 16px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.filter-tab:hover,.filter-tab.active{background:var(--green-dim);color:var(--green);border-color:rgba(0,255,136,0.3);}
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.project-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.project-card::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--green);opacity:0;transition:opacity 0.15s;}
+.project-card:hover{border-color:rgba(0,255,136,0.25);transform:translateX(4px);}
+.project-card:hover::after{opacity:1;}
+.project-card.blue::after{background:var(--blue);}
+.project-card.blue:hover{border-color:rgba(42,127,212,0.4);}
+.project-type{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.project-type-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.project-type-dot.blue{background:var(--blue);}
+.project-type-dot.purple{background:#a78bfa;}
+.project-card h3{font-family:var(--mono);font-size:16px;font-weight:700;color:#fff;margin-bottom:10px;}
+.project-card p{font-size:14px;color:var(--muted);line-height:1.7;}
+.project-tags{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.ptag{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:3px 10px;border-radius:3px;}
+.project-status{font-family:var(--mono);font-size:11px;margin-top:16px;}
+.status-live{color:var(--green);}
+.status-wip{color:#febc2e;}
+.status-client{color:#7dd3fc;}
+
+/* TECH STACK */
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:8px;}
+.stack-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 16px;text-align:center;transition:all 0.15s;}
+.stack-item:hover{border-color:var(--blue);transform:translateY(-2px);}
+.stack-icon{font-size:28px;margin-bottom:10px;}
+.stack-name{font-family:var(--mono);font-size:12px;color:var(--text);font-weight:500;}
+.stack-level{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* TESTIMONIALS */
+.testimonials-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.testimonial-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px;position:relative;}
+.testimonial-card::before{content:'"';position:absolute;top:16px;right:24px;font-size:64px;color:var(--blue);opacity:0.2;font-family:Georgia,serif;line-height:1;}
+.testimonial-text{font-size:15px;color:var(--text);line-height:1.8;margin-bottom:20px;font-style:italic;}
+.testimonial-author{display:flex;align-items:center;gap:12px;}
+.testimonial-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:var(--green);font-weight:700;}
+.testimonial-name{font-family:var(--mono);font-size:13px;color:#fff;font-weight:500;}
+.testimonial-role{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.testimonial-stars{color:var(--green);font-size:12px;margin-bottom:16px;letter-spacing:2px;}
+
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
+.about-block{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px;margin-bottom:16px;}
+.about-block:last-child{margin-bottom:0;}
+.about-block h3{font-family:var(--mono);font-size:14px;color:var(--green);margin-bottom:16px;}
+.about-block p{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:12px;}
+.skill-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.skill-label{font-family:var(--mono);font-size:12px;color:var(--text);width:120px;flex-shrink:0;}
+.skill-bar-bg{flex:1;height:4px;background:var(--bg3);border-radius:2px;}
+.skill-bar{height:4px;border-radius:2px;background:var(--blue);transition:width 1s ease;}
+.skill-bar.green{background:var(--green);}
+.skill-pct{font-family:var(--mono);font-size:11px;color:var(--muted);width:36px;text-align:right;}
+
+/* CONTACT */
+.contact-wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
+.contact-block{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px;}
+.contact-block h3{font-family:var(--mono);font-size:14px;color:var(--green);margin-bottom:20px;}
+.contact-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;font-family:var(--mono);font-size:13px;}
+.contact-row-label{color:var(--muted);width:80px;flex-shrink:0;}
+.contact-row-val{color:var(--text);word-break:break-all;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px;}
+.form-group input,.form-group textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color 0.15s;}
+.form-group input:focus,.form-group textarea:focus{border-color:rgba(0,255,136,0.4);}
+.form-group textarea{height:100px;resize:vertical;}
+.form-submit{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,255,136,0.3);padding:10px 24px;border-radius:6px;font-family:var(--mono);font-size:13px;cursor:pointer;width:100%;transition:all 0.15s;margin-top:4px;}
+.form-submit:hover{background:rgba(0,255,136,0.2);}
+.form-submit:disabled{opacity:0.5;cursor:not-allowed;}
+.form-msg{font-family:var(--mono);font-size:12px;margin-top:12px;padding:10px 14px;border-radius:6px;display:none;}
+.form-msg.success{display:block;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,255,136,0.3);}
+.form-msg.error{display:block;color:#ff6b6b;background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+footer span{font-family:var(--mono);font-size:12px;color:var(--muted);}
+footer .f-right{color:var(--green);}
+
+/* TABLET */
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr;min-height:auto;padding:60px 32px;}
+  .hero-right{display:none;}
+  .about-grid,.contact-wrap{grid-template-columns:1fr;}
+  .section{padding:60px 32px;}
+  nav{padding:0 32px;}
+  footer{padding:24px 32px;}
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  nav{padding:0 20px;}
+  .nav-links{display:none;}
+  .hamburger{display:flex;}
+  .hero{padding:40px 20px;}
+  .hero h1{font-size:clamp(26px,8vw,38px);}
+  .hero-desc{font-size:15px;}
+  .hero-btns{flex-direction:column;}
+  .btn-green,.btn-ghost{width:100%;text-align:center;}
+  .hero-stats{gap:20px;flex-wrap:wrap;}
+  .section{padding:40px 20px;}
+  .projects-grid,.testimonials-grid{grid-template-columns:1fr;}
+  .stack-grid{grid-template-columns:repeat(3,1fr);}
+  .filter-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;}
+  .filter-tab{white-space:nowrap;flex-shrink:0;}
+  .project-card:hover{transform:none;}
+  footer{flex-direction:column;text-align:center;padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <span class="nav-prompt">~/</span>
+    <span class="nav-name">lb-dev</span>
+    <span class="nav-cursor"></span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('home',this)">home</button>
+    <button class="nav-link" onclick="showPage('projects',this)">projects</button>
+    <button class="nav-link" onclick="showPage('about',this)">about</button>
+    <button class="nav-link" onclick="showPage('contact',this)">contact</button>
+  </div>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-link active" onclick="showPage('home',this);toggleMenu()">home</button>
+  <button class="mobile-nav-link" onclick="showPage('projects',this);toggleMenu()">projects</button>
+  <button class="mobile-nav-link" onclick="showPage('about',this);toggleMenu()">about</button>
+  <button class="mobile-nav-link" onclick="showPage('contact',this);toggleMenu()">contact</button>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-left">
+      <div class="hero-eyebrow">// <span>welcome to lb development</span></div>
+      <h1>I build <em>random stuff</em><br/>and ship it.</h1>
+      <p class="hero-desc">A personal lab for web apps, tools, games, design work, and whatever else I feel like making. Some of it's for clients. Most of it's for fun.</p>
+      <div class="hero-btns">
+        <button class="btn-green" onclick="showPage('projects',null)">$ view projects</button>
+        <button class="btn-ghost" onclick="showPage('contact',null)">get in touch</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-num">6<span>+</span></div><div class="hero-stat-label">// projects</div></div>
+        <div><div class="hero-stat-num">3<span>+</span></div><div class="hero-stat-label">// clients</div></div>
+        <div><div class="hero-stat-num">100<span>%</span></div><div class="hero-stat-label">// passion</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+          <span class="terminal-title">lb-dev — info.json</span>
+        </div>
+        <div class="terminal-body">
+          <span class="t-comment">// who's behind this?</span><br/>
+          {<br/>
+          &nbsp;&nbsp;<span class="t-key">"name"</span>: <span class="t-str">"Liam B."</span>,<br/>
+          &nbsp;&nbsp;<span class="t-key">"role"</span>: <span class="t-str">"developer / builder / tinkerer"</span>,<br/>
+          &nbsp;&nbsp;<span class="t-key">"location"</span>: <span class="t-str">"Brisbane, QLD 🇦🇺"</span>,<br/>
+          &nbsp;&nbsp;<span class="t-key">"building"</span>: <span class="t-val">true</span>,<br/>
+          &nbsp;&nbsp;<span class="t-key">"open_to_work"</span>: <span class="t-val">true</span>,<br/>
+          &nbsp;&nbsp;<span class="t-key">"projects"</span>: <span class="t-num">6</span>,<br/>
+          }
+          <div class="typing-line">
+            <span class="typing-prompt">$</span>
+            <span id="typingText"></span>
+            <span class="typing-caret"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS -->
+<div class="page" id="page-projects">
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <span class="section-title">projects</span>
+      <span class="section-count">// 3 total</span>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterProjects('all',this)">all</button>
+      <button class="filter-tab" onclick="filterProjects('web app',this)">web app</button>
+      <button class="filter-tab" onclick="filterProjects('tool',this)">tool</button>
+      <button class="filter-tab" onclick="filterProjects('design',this)">design</button>
+    </div>
+    <div class="projects-grid" id="projectsGrid">
+      <div class="project-card blue" data-type="web app design" onclick="window.open('https://steadypathsupport.com/','_blank')">
+        <div class="project-type"><div class="project-type-dot"></div>web app</div>
+        <h3>Steady Path Support Website</h3>
+        <p>A modern, responsive website for a NDIA support organisation.</p>
+        <div class="project-tags"><span class="ptag">HTML/CSS</span><span class="ptag">JS</span></div>
+        <div class="project-status status-client">● client</div>
+      </div>
+      <div class="project-card" data-type="web app design" onclick="window.open('https://lbdev.dev','_blank')">
+        <div class="project-type"><div class="project-type-dot"></div>web app</div>
+        <h3>LB Dev Site</h3>
+        <p>This site. A personal lab and project showcase — built to ship fast and look good doing it.</p>
+        <div class="project-tags"><span class="ptag">HTML</span><span class="ptag">CSS</span><span class="ptag">JS</span></div>
+        <div class="project-status status-live">● live</div>
+      </div>
+      <div class="project-card" data-type="tool">
+        <div class="project-type"><div class="project-type-dot"></div>tool</div>
+        <h3>More coming soon...</h3>
+        <p>Always building. Check back for new drops — tools, games, apps, whatever I'm working on next.</p>
+        <div class="project-tags"><span class="ptag">???</span></div>
+        <div class="project-status status-wip">◐ in progress</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="page" id="page-about">
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <span class="section-title">about</span>
+    </div>
+    <div class="about-grid">
+      <div>
+        <div class="about-block">
+          <h3>// who am i</h3>
+          <p>I'm Liam — a developer, designer, and builder based in Brisbane, Australia. I make things for the web, for clients, and for the sake of making things.</p>
+          <p>When I'm not coding I'm doing robotics (FTC/FRC with Team Sheldon), camping, or playing games.</p>
+        </div>
+        <div class="about-block">
+          <h3>// what i do</h3>
+          <p>Web apps, tools, design work, games — basically if it's interesting I'll build it. I also take on client work when the project is worth it.</p>
+          <p>Currently studying at Sheldon College and heading toward engineering and software development.</p>
+        </div>
+      </div>
+      <div>
+        <div class="about-block">
+          <h3>// skills.json</h3>
+          <div class="skill-row"><span class="skill-label">HTML / CSS</span><div class="skill-bar-bg"><div class="skill-bar green" style="width:85%"></div></div><span class="skill-pct">85%</span></div>
+          <div class="skill-row"><span class="skill-label">JavaScript</span><div class="skill-bar-bg"><div class="skill-bar" style="width:70%"></div></div><span class="skill-pct">70%</span></div>
+          <div class="skill-row"><span class="skill-label">Python</span><div class="skill-bar-bg"><div class="skill-bar" style="width:65%"></div></div><span class="skill-pct">65%</span></div>
+          <div class="skill-row"><span class="skill-label">UI / Design</span><div class="skill-bar-bg"><div class="skill-bar green" style="width:75%"></div></div><span class="skill-pct">75%</span></div>
+          <div class="skill-row"><span class="skill-label">Robotics</span><div class="skill-bar-bg"><div class="skill-bar" style="width:80%"></div></div><span class="skill-pct">80%</span></div>
+          <div class="skill-row"><span class="skill-label">Git / GitHub</span><div class="skill-bar-bg"><div class="skill-bar" style="width:72%"></div></div><span class="skill-pct">72%</span></div>
+        </div>
+        <div class="about-block">
+          <h3>// tech stack</h3>
+          <div class="stack-grid">
+            <div class="stack-item"><div class="stack-icon">🌐</div><div class="stack-name">HTML/CSS</div><div class="stack-level">advanced</div></div>
+            <div class="stack-item"><div class="stack-icon">⚡</div><div class="stack-name">JavaScript</div><div class="stack-level">intermediate</div></div>
+            <div class="stack-item"><div class="stack-icon">🐍</div><div class="stack-name">Python</div><div class="stack-level">intermediate</div></div>
+            <div class="stack-item"><div class="stack-icon">🐙</div><div class="stack-name">GitHub</div><div class="stack-level">comfortable</div></div>
+            <div class="stack-item"><div class="stack-icon">🤖</div><div class="stack-name">Robotics</div><div class="stack-level">advanced</div></div>
+            <div class="stack-item"><div class="stack-icon">💻</div><div class="stack-name">Android Studio</div><div class="stack-level">beginner</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="page" id="page-contact">
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <span class="section-title">contact</span>
+    </div>
+    <div class="contact-wrap">
+      <div class="contact-block">
+        <h3>// reach out</h3>
+        <div class="contact-row"><span class="contact-row-label">email</span><span class="contact-row-val">help@lbdev.com.au</span></div>
+        <div class="contact-row"><span class="contact-row-label">location</span><span class="contact-row-val">Brisbane, QLD</span></div>
+        <div class="contact-row"><span class="contact-row-label">github</span><span class="contact-row-val">github.com/Liam-burnett-AU</span></div>
+        <div class="contact-row"><span class="contact-row-label">status</span><span class="contact-row-val status-live">● open to projects</span></div>
+        <br/>
+        <p style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:1.9;">Got a project? Want to collab? Just want to say hi? Shoot me a message and I'll get back to you within 24 hours.</p>
+      </div>
+      <div class="contact-block">
+        <h3>// send a message</h3>
+        <div class="form-group">
+          <label>name</label>
+          <input type="text" id="f-name" name="name" placeholder="your name"/>
+        </div>
+        <div class="form-group">
+          <label>email</label>
+          <input type="email" id="f-email" name="email" placeholder="your@email.com"/>
+        </div>
+        <div class="form-group">
+          <label>subject</label>
+          <input type="text" id="f-subject" name="subject" placeholder="project / collab / just saying hi"/>
+        </div>
+        <div class="form-group">
+          <label>message</label>
+          <textarea id="f-message" name="message" placeholder="what's up?"></textarea>
+        </div>
+        <button class="form-submit" id="submitBtn" type="button" onclick="submitForm()">$ send --message</button>
+        <div class="form-msg" id="formMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>// lb-development &nbsp;·&nbsp; engineered for tomorrow.</span>
+  <span class="f-right">© 2025 LB Dev</span>
+</footer>
+
+<script>
+// PAGE NAV
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link,.mobile-nav-link').forEach(a=>a.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// HAMBURGER
+function toggleMenu(){
+  document.getElementById('mobileNav').classList.toggle('open');
+  document.getElementById('hamburger').classList.toggle('open');
+}
+
+// FILTER PROJECTS
+function filterProjects(type,btn){
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#projectsGrid .project-card').forEach(card=>{
+    if(type==='all'||card.dataset.type.includes(type)){
+      card.style.display='block';
+    } else {
+      card.style.display='none';
+    }
+  });
+}
+
+// CONTACT FORM — posts to contact.php on your SmarterASP server
+async function submitForm(){
+  const name    = document.getElementById('f-name').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
+  const subject = document.getElementById('f-subject').value.trim();
+  const message = document.getElementById('f-message').value.trim();
+  const btn     = document.getElementById('submitBtn');
+  const msg     = document.getElementById('formMsg');
+
+  // basic validation
+  if(!name || !email || !message){
+    msg.className='form-msg error';
+    msg.textContent='// error: name, email and message are required.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '$ sending...';
+  msg.className = 'form-msg';
+
+  const data = new FormData();
+  data.append('name', name);
+  data.append('email', email);
+  data.append('subject', subject || 'New message from lbdev.dev');
+  data.append('message', message);
+
+  try {
+    const res = await fetch('https://lbdev.tech/contact.php', { method: 'POST', body: data });
+    const json = await res.json();
+    if(json.success){
+      msg.className='form-msg success';
+      msg.textContent='// message sent. i\'ll get back to you soon.';
+      document.getElementById('f-name').value='';
+      document.getElementById('f-email').value='';
+      document.getElementById('f-subject').value='';
+      document.getElementById('f-message').value='';
+    } else {
+      throw new Error('server error');
+    }
+  } catch(e){
+    msg.className='form-msg error';
+    msg.textContent='// error: something went wrong. try emailing help@lbdev.com.au directly.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '$ send --message';
+}
+
+// TYPING ANIMATION
+const phrases=['git push origin main','npm run build','python main.py','console.log("hello")','ssh lb-dev@server','./deploy.sh --prod'];
+let pi=0,ci=0,deleting=false;
+function type(){
+  const el=document.getElementById('typingText');
+  if(!el) return;
+  const phrase=phrases[pi];
+  if(!deleting){
+    el.textContent=phrase.slice(0,ci+1);
+    ci++;
+    if(ci===phrase.length){deleting=true;setTimeout(type,1400);return;}
+  } else {
+    el.textContent=phrase.slice(0,ci-1);
+    ci--;
+    if(ci===0){deleting=false;pi=(pi+1)%phrases.length;}
+  }
+  setTimeout(type,deleting?40:80);
+}
+type();
+</script>
+</body>
+</html>
