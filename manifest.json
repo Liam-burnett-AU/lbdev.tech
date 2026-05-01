@@ -1,0 +1,34 @@
+{
+  "projects": [
+    {
+      "id": "steady-path",
+      "name": "Steady Path Support Website",
+      "description": "A modern, responsive website for a NDIA support organisation.",
+      "icon": "🏥",
+      "type": "web app",
+      "tags": ["HTML/CSS", "JS"],
+      "url": "https://steadypathsupport.com/",
+      "status": "client"
+    },
+    {
+      "id": "lb-dev",
+      "name": "LB Dev Site",
+      "description": "This site. A personal lab and project showcase — built to ship fast and look good doing it.",
+      "icon": "💻",
+      "type": "web app",
+      "tags": ["HTML", "CSS", "JS"],
+      "url": "https://lbdev.tech",
+      "status": "live"
+    },
+    {
+      "id": "lb-tools",
+      "name": "LB Tools",
+      "description": "A growing collection of browser-based tools — no accounts, no nonsense, just useful stuff.",
+      "icon": "🔧",
+      "type": "tool",
+      "tags": ["HTML", "CSS", "JS"],
+      "url": "https://tools.lbdev.tech",
+      "status": "live"
+    }
+  ]
+}
