@@ -291,7 +291,7 @@ footer .f-right{color:var(--green);}
         <div class="project-tags"><span class="ptag">HTML/CSS</span><span class="ptag">JS</span></div>
         <div class="project-status status-client">● client</div>
       </div>
-      <div class="project-card" data-type="web app design" onclick="window.open('https://lbdev.dev','_blank')">
+      <div class="project-card" data-type="web app design" onclick="window.open('https://lbdev.tech','_blank')">
         <div class="project-type"><div class="project-type-dot"></div>web app</div>
         <h3>LB Dev Site</h3>
         <p>This site. A personal lab and project showcase — built to ship fast and look good doing it.</p>
@@ -365,7 +365,7 @@ footer .f-right{color:var(--green);}
     <div class="contact-wrap">
       <div class="contact-block">
         <h3>// reach out</h3>
-        <div class="contact-row"><span class="contact-row-label">email</span><span class="contact-row-val">help@lbdev.com.au</span></div>
+        <div class="contact-row"><span class="contact-row-label">email</span><span class="contact-row-val">help@lbdev.tech</span></div>
         <div class="contact-row"><span class="contact-row-label">location</span><span class="contact-row-val">Brisbane, QLD</span></div>
         <div class="contact-row"><span class="contact-row-label">github</span><span class="contact-row-val">github.com/Liam-burnett-AU</span></div>
         <div class="contact-row"><span class="contact-row-label">status</span><span class="contact-row-val status-live">● open to projects</span></div>
@@ -454,11 +454,11 @@ async function submitForm(){
   const data = new FormData();
   data.append('name', name);
   data.append('email', email);
-  data.append('subject', subject || 'New message from lbdev.dev');
+  data.append('subject', subject || 'New message from lbdev.tech');
   data.append('message', message);
 
   try {
-    const res = await fetch('https://api-email-home.lbdev.tech/contact.php', { method: 'POST', body: data });
+    const res = await fetch('https://lbdev.tech/contact.php', { method: 'POST', body: data });
     const json = await res.json();
     if(json.success){
       msg.className='form-msg success';
@@ -472,7 +472,7 @@ async function submitForm(){
     }
   } catch(e){
     msg.className='form-msg error';
-    msg.textContent='// error: something went wrong. try emailing help@lbdev.com.au directly.';
+    msg.textContent='// error: something went wrong. try emailing help@lbdev.tech directly.';
   }
 
   btn.disabled = false;
